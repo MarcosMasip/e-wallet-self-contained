@@ -67,6 +67,23 @@ public class AuthService {
     }
 
     /**
+     * Returns currently authenticated user info (excluding password).
+     */
+    public JwtResponse me(Authentication authentication) {
+        final UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        final List<String> roles = userDetails.getAuthorities().stream().map(a -> a.getAuthority()).toList();
+        return JwtResponse.builder()
+                .id(userDetails.getId())
+                .username(userDetails.getUsername())
+                .firstName(userDetails.getFirstName())
+                .lastName(userDetails.getLastName())
+                .roles(roles)
+                .token(null) // token not echoed back
+                .type(null)
+                .build();
+    }
+
+    /**
      * Registers a user by provided credentials and user info.
      *
      * @param request

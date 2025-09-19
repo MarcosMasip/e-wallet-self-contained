@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import AuthService from './services/AuthService';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/scroll-to-top';
 import reportWebVitals from './reportWebVitals';
@@ -11,20 +12,35 @@ import ThemeProvider from './theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-root.render(
-  <HelmetProvider>
-    <BrowserRouter>
-      <ThemeProvider>
-        <ScrollToTop />
-        <SnackbarProvider preventDuplicate>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        </SnackbarProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </HelmetProvider>
-);
+// Perform optional session bootstrap (validate stored token, fetch profile)
+const bootstrap = async () => {
+  try {
+    const user = AuthService.getCurrentUser();
+    if (user?.token) {
+      await AuthService.me();
+    }
+  } catch (e) {
+    // If bootstrap fails (e.g., expired token), logout silently
+    AuthService.logout();
+  }
+};
+
+bootstrap().finally(() => {
+  root.render(
+    <HelmetProvider>
+      <BrowserRouter>
+        <ThemeProvider>
+          <ScrollToTop />
+          <SnackbarProvider preventDuplicate>
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
+          </SnackbarProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </HelmetProvider>
+  );
+});
 
 // If you want to enable client cache, register instead.
 serviceWorker.unregister();

@@ -105,6 +105,34 @@ Details:
 * H2 native mode: Users seeded via `db/h2/data.sql`; a startup runner force-resets all seeded user passwords to `password123` every launch for consistency.
 * User table name standardized to `app_user` (renamed from reserved word `user`).
 
+### Session Bootstrap & Auth Flow
+
+What happens after you log in (or reload with an existing token):
+1. On login we store the raw `JwtResponse` (`token`, id, names, roles) in `localStorage` under key `user`.
+2. On every request an Axios request interceptor automatically attaches `Authorization: Bearer <token>` if present.
+3. On app startup (`index.js`) a lightweight bootstrap runs: if a token exists it calls `GET /api/v1/auth/me` to refresh user profile fields (name / roles) without re-issuing a token.
+4. If the stored token is invalid/expired the bootstrap silently clears it and you are taken to the login page when accessing a protected route.
+5. A response interceptor watches for 401/403: it clears the session and performs a redirect to `/login` (unless already there) to prevent using a stale token.
+
+Endpoint summary:
+* `POST /api/v1/auth/login` issues JWT
+* `POST /api/v1/auth/signup` creates user
+* `GET /api/v1/auth/me` returns current authenticated principal (no token echo)
+
+Storage format example:
+```json
+{
+	"token": "<jwt>",
+	"id": 1,
+	"username": "johndoe",
+	"firstName": "John",
+	"lastName": "Doe",
+	"roles": ["ROLE_USER","ROLE_ADMIN"]
+}
+```
+
+If you need to manually clear a broken session: open DevTools Console and run `localStorage.removeItem('user')` then refresh.
+
 ### Environment Configuration
 
 Editable variables live in `.env` (created from `.env.example` on first run):
@@ -199,8 +227,7 @@ Legacy instructions remain in: [How to run?](backend/src/main/resources/docs/how
 If you ever see a blank page, an Error Boundary now renders a fallback and points you back to login instead of a white screen.
 
 ### Roadmap Ideas
-* Token refresh & /auth/me bootstrap
-* Axios 401 interceptor auto-logout
+* (Planned) Token refresh / silent re-auth
 * Integration tests (Testcontainers) & frontend e2e harness
 * CI workflow (build + smoke test)
 * Role management UI

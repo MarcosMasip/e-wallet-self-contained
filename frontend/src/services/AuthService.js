@@ -37,6 +37,24 @@ const getCurrentUser = () => {
   }
 };
 
-const AuthService = { login, signup, logout, getCurrentUser };
+// Merge existing stored user with fresh me() response (keep token)
+const mergeUser = (stored, fresh) => {
+  if (!stored) return fresh;
+  return { ...stored, ...fresh, token: stored.token };
+};
+
+// Fetch current authenticated user profile
+const me = () => {
+  return axios.get('/auth/me').then((response) => {
+    const fresh = response.data;
+    if (!fresh) return null;
+    const existing = getCurrentUser();
+    const merged = mergeUser(existing, fresh);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return merged;
+  });
+};
+
+const AuthService = { login, signup, logout, getCurrentUser, me };
 
 export default AuthService;
