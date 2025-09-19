@@ -87,10 +87,10 @@ Frontend: http://localhost:3000
 Backend API (OpenAPI UI maybe at): http://localhost:8080/swagger-ui.html
 Health: http://localhost:8080/actuator/health
 
-Demo Users (from migrations):
-  johndoe / password: 123456 (assuming bcrypt hash matches) *IF different, check user creation logic*
-  lindacalvin / (same password assumption)
-  jeffreytaylor / (same password assumption)
+Demo Users (from migrations/native seeds):
+  johndoe / password123
+  lindacalvin / password123
+  jeffreytaylor / password123
 
 If login fails, inspect backend logs: $COMPOSE_BIN -f docker-compose.local.yml logs -f backend
 ============================================================${NC}

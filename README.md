@@ -38,64 +38,72 @@ The relationship between the entities is shown on [Architecture](backend/src/mai
 
 <br/>
 
-### 🚀 Quick Start (One-Time Setup & Run)
+### 🚀 Quick Start (Fresh Clone to Running App)
 
 Requirements:
 * Preferred: Docker (Desktop or engine) with Compose plugin
 * Fallback (auto): Java 17 + Node.js (Yarn) if Docker unavailable (uses in-memory H2 instead of Postgres)
 * macOS / Linux / Windows (PowerShell)
 
-Clone and run (first run downloads dependencies & builds images):
+One command path (downloads everything on first run):
 
-macOS / Linux:
+macOS / Linux (bash):
 ```bash
 ./run.sh
 ```
-
 Windows (PowerShell):
 ```powershell
 ./run.ps1
 ```
 
-When the script finishes it prints the URLs and demo users. Open:
+What this single command does on first run:
+1. Creates `.env` from template and generates a secure JWT secret (if missing)
+2. Builds backend & frontend Docker images (fetches all Maven + Node dependencies)
+3. Starts Postgres, backend, and frontend containers
+4. Waits for backend health; prints access banner with demo credentials
+
+Automatic fallback (no Docker or daemon down):
+* Switches to native dev mode (`dev-native.sh`) using H2 in-memory DB
+* Installs frontend dependencies (if not already) and launches React dev server
+* Resets all user passwords deterministically to `password123` each start (H2 only)
+
+After completion open:
 * Frontend: http://localhost:3000
-* Backend Health: http://localhost:8080/actuator/health
-* (If enabled) OpenAPI UI: http://localhost:8080/swagger-ui.html
+* Backend health: http://localhost:8080/api/v1/health
+* Actuator: http://localhost:8080/actuator/health
+* OpenAPI (if enabled): http://localhost:8080/swagger-ui.html
 
-If Docker is not installed or the daemon is stopped, the script automatically switches to a native fallback mode:
-* Backend runs with Spring profile `h2` (in-memory database)
-* Data is transient (reset each run)
-* Same API base URL and frontend behavior
-* Requires Java 17 (JDK) and Yarn (or npm) installed locally
+Subsequent runs (Docker or native) are fast & can be offline (cached layers / local dependencies).
 
-Subsequent runs are much faster and can be offline (Docker layer & volume cache).
-
-To stop everything:
+Stop / Cleanup:
 ```bash
+# Docker stack down (keeps DB data)
 docker compose -f docker-compose.local.yml down
+
+# Full reset (DB volume & rebuild)
+docker compose -f docker-compose.local.yml down -v
+./run.sh
 ```
 
-Convenience (optional):
+Optional Make targets:
 ```bash
-make up      # start
-make logs    # tail logs
-make down    # stop
+make up      # start stack
+make logs    # tail all logs
+make down    # stop stack
 ```
 
-### Demo Users
+### Demo Users & Credentials
 
-In Docker/Postgres mode, users are seeded via Flyway migrations.
-In native H2 fallback mode, users are seeded via `db/h2/data.sql` with the unified demo password:
-```
-username       password
----------       -----------
-johndoe        password123
-lindacalvin    password123
-jeffreytaylor  password123
-```
-Adjust `db/h2/data.sql` if you need different credentials; restart native mode to reload.
+| Username      | Password     | Roles                  |
+|---------------|--------------|------------------------|
+| johndoe       | password123  | ROLE_USER, ROLE_ADMIN  |
+| lindacalvin   | password123  | ROLE_USER, ROLE_ADMIN  |
+| jeffreytaylor | password123  | ROLE_USER              |
 
-Note: The underlying table for users has been standardized to `app_user` (renamed from reserved word `user`) across Postgres and H2 for portability and to avoid SQL dialect edge cases.
+Details:
+* Postgres: Users seeded via Flyway migrations (hashes correspond to `password123`).
+* H2 native mode: Users seeded via `db/h2/data.sql`; a startup runner force-resets all seeded user passwords to `password123` every launch for consistency.
+* User table name standardized to `app_user` (renamed from reserved word `user`).
 
 ### Environment Configuration
 
@@ -110,9 +118,12 @@ REACT_APP_API_BASE_URL=http://localhost:8080/api/v1
 
 Delete `.env` and re-run `./run.sh` to regenerate `jwt_secret`.
 
-### Offline Mode
+### Offline / Air-Gapped Re-Runs
 
-After the initial successful build (which fetches Maven & Node dependencies), you can disconnect from the internet; subsequent `./run.sh` executions reuse cached Docker layers and local Postgres volume.
+After the first successful `./run.sh` (which downloads images & dependencies):
+* Docker mode: Subsequent runs reuse image layers + Postgres volume (no network required).
+* Native H2 mode: Maven & Node modules cached locally (~`backend/.m2` via Docker build cache or your local repo + `frontend/node_modules`).
+* You can safely work offline unless you add new dependencies.
 
 ### Architecture (Local Runtime)
 
@@ -172,31 +183,27 @@ Legacy instructions remain in: [How to run?](backend/src/main/resources/docs/how
 
 ### Maintenance / Troubleshooting
 
-* Rebuild images ignoring cache:
-	```bash
-	docker compose -f docker-compose.local.yml build --no-cache
-	```
-* View backend logs only:
-	```bash
-	docker compose -f docker-compose.local.yml logs -f backend
-	```
-* Reset database (DESTROYS DATA):
-	```bash
-	docker compose -f docker-compose.local.yml down -v
-	./run.sh
-	```
-* Change JWT secret: edit `.env` then restart stack.
-* Error: `Cannot connect to the Docker daemon` → Start Docker Desktop (macOS/Windows) or on Linux: `sudo systemctl start docker` then rerun `./run.sh`.
-* Docker absent or stopped → Script transparently starts native mode (H2). Install Docker later for a persistent Postgres database.
-* Frontend shows "Network Error":
-	1. Check backend health: `curl -s http://localhost:8080/api/v1/health`
-	2. If fails in native mode, re-run `./run.sh` and watch backend logs.
-	3. Run smoke test: `bash scripts/smoke.sh`
+| Scenario | Command / Action | Expected Result |
+|----------|------------------|-----------------|
+| Rebuild images (no cache) | `docker compose -f docker-compose.local.yml build --no-cache` | Fresh rebuild; longer runtime |
+| View backend logs | `docker compose -f docker-compose.local.yml logs -f backend` | Streaming Spring logs |
+| Reset DB completely | `docker compose -f docker-compose.local.yml down -v && ./run.sh` | Clean Postgres schema & reseed |
+| Change JWT secret | Edit `.env` `jwt_secret=...` then `./run.sh` | New tokens issued afterwards |
+| Docker daemon error | Start Docker / `sudo systemctl start docker` | Rerun succeeds |
+| No Docker installed | `./run.sh` auto-fallback | H2 in-memory mode started |
+| Frontend Network Error | `curl -s http://localhost:8080/api/v1/health` | If fails, backend not ready |
+| Smoke test auth | `bash scripts/smoke.sh` | Health + login + protected endpoint pass |
+| Force password consistency (H2) | Happens automatically via runner | All demo users = password123 |
+| Stuck ports 8080/3000 (native) | Kill processes or re-run `dev-native.sh` (auto-kills) | Ports freed & app starts |
+
+If you ever see a blank page, an Error Boundary now renders a fallback and points you back to login instead of a white screen.
 
 ### Roadmap Ideas
-* Add native dev mode script (run backend & frontend outside Docker for hot reload).
-* Parameterize demo passwords & document them explicitly.
-* Add automated smoke test script.
+* Token refresh & /auth/me bootstrap
+* Axios 401 interceptor auto-logout
+* Integration tests (Testcontainers) & frontend e2e harness
+* CI workflow (build + smoke test)
+* Role management UI
 
 <br/>
 <br/>
