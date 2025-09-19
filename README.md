@@ -84,7 +84,16 @@ make down    # stop
 
 ### Demo Users
 
-The Flyway migrations create several users. If you need to adjust or add a known password, add a new migration with a BCrypt hash and re-run. (Current hashes correspond to placeholder passwords; update documentation if you change them.)
+In Docker/Postgres mode, users are seeded via Flyway migrations.
+In native H2 fallback mode, users are seeded via `db/h2/data.sql` with the unified demo password:
+```
+username       password
+---------       -----------
+johndoe        password123
+lindacalvin    password123
+jeffreytaylor  password123
+```
+Adjust `db/h2/data.sql` if you need different credentials; restart native mode to reload.
 
 ### Environment Configuration
 
