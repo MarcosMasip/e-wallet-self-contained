@@ -104,6 +104,7 @@ Details:
 * Postgres: Users seeded via Flyway migrations (hashes correspond to `password123`).
 * H2 native mode: Users seeded via `db/h2/data.sql`; a startup runner force-resets all seeded user passwords to `password123` every launch for consistency.
 * User table name standardized to `app_user` (renamed from reserved word `user`).
+* New signups: If for any reason roles are missing in the database (corrupt seed / partial init), a defensive fallback assigns `ROLE_USER` automatically so newly registered users can still authenticate and create wallets in H2/native mode.
 
 ### Session Bootstrap & Auth Flow
 
@@ -132,6 +133,8 @@ Storage format example:
 ```
 
 If you need to manually clear a broken session: open DevTools Console and run `localStorage.removeItem('user')` then refresh.
+
+Note on authorization: Controllers now use `@PreAuthorize("hasAuthority('ROLE_USER')")` because user roles are stored as `SimpleGrantedAuthority` values matching the exact enum names (e.g. `ROLE_USER`, `ROLE_ADMIN`). Using `hasRole('ROLE_USER')` would internally look for `ROLE_ROLE_USER` and fail. If you revert to `hasRole`, pass just `USER` (without the `ROLE_` prefix). The current approach is explicit and avoids that confusion.
 
 ### Environment Configuration
 
@@ -220,8 +223,9 @@ Legacy instructions remain in: [How to run?](backend/src/main/resources/docs/how
 | Docker daemon error | Start Docker / `sudo systemctl start docker` | Rerun succeeds |
 | No Docker installed | `./run.sh` auto-fallback | H2 in-memory mode started |
 | Frontend Network Error | `curl -s http://localhost:8080/api/v1/health` | If fails, backend not ready |
-| Smoke test auth | `bash scripts/smoke.sh` | Health + login + protected endpoint pass |
-| Force password consistency (H2) | Happens automatically via runner | All demo users = password123 |
+| Network Error on signup/login | Check backend `docker compose -f docker-compose.local.yml logs -f backend` & curl `http://localhost:8080/api/v1/health` | Backend must return 200; rerun `./run.sh` if build failed |
+| Stuck ports 8080/3000 (native) | Kill processes or re-run `dev-native.sh` (auto-kills) | Ports freed & app starts |
+| Newly signed-up user cannot create wallet (401) | Re-login; role fallback now assigns ROLE_USER automatically | Wallet creation succeeds |
 | Stuck ports 8080/3000 (native) | Kill processes or re-run `dev-native.sh` (auto-kills) | Ports freed & app starts |
 
 If you ever see a blank page, an Error Boundary now renders a fallback and points you back to login instead of a white screen.

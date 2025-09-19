@@ -5,20 +5,34 @@ const STORAGE_KEY = 'user';
 
 const login = (body) => {
   const url = '/auth/login';
-  return axios.post(url, body).then((response) => {
-    // Backend returns JwtResponse directly (no nested data wrapper)
-    const payload = response.data;
-    if (!payload || !payload.token) {
-      throw new Error('Malformed login response');
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    return payload;
-  });
+  return axios.post(url, body)
+    .then((response) => {
+      const payload = response.data;
+      if (!payload || !payload.token) {
+        throw new Error('Malformed login response');
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      return payload;
+    })
+    .catch((e) => {
+      if (!e.response) {
+        // Network layer issue
+        throw new Error('Network Error: Backend unreachable. Verify backend container is healthy at /api/v1/health.');
+      }
+      throw e;
+    });
 };
 
 const signup = (body) => {
   const url = '/auth/signup';
-  return axios.post(url, body).then((response) => response.data);
+  return axios.post(url, body)
+    .then((response) => response.data)
+    .catch((e) => {
+      if (!e.response) {
+        throw new Error('Network Error: Backend unreachable. Check backend health /api/v1/health.');
+      }
+      throw e;
+    });
 };
 
 const logout = () => {

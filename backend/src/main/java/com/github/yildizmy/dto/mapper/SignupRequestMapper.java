@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Mapper used for mapping SignupRequest fields.
@@ -44,11 +45,22 @@ public abstract class SignupRequestMapper {
     @AfterMapping
     void setToEntityFields(@MappingTarget User entity, SignupRequest dto) {
         entity.setPassword(passwordEncoder.encode(dto.getPassword()));
+    // Defensive: if client sends null/empty roles, default to ROLE_USER
+    final var requestedRoles = (dto.getRoles() == null || dto.getRoles().isEmpty())
+        ? Set.of(RoleType.ROLE_USER.name())
+        : dto.getRoles();
 
-        final List<RoleType> roleTypes = dto.getRoles().stream()
-                .map(RoleType::valueOf)
-                .toList();
-        final List<Role> roles = roleService.getReferenceByTypeIsIn(new HashSet<>(roleTypes));
-        entity.setRoles(new HashSet<>(roles));
+    List<RoleType> roleTypes = requestedRoles.stream()
+        .map(RoleType::valueOf)
+        .toList();
+
+    List<Role> roles = roleService.getReferenceByTypeIsIn(new HashSet<>(roleTypes));
+
+    // If for any reason resolution produced no roles (e.g., missing DB rows), force ROLE_USER fallback
+    if (roles.isEmpty()) {
+        roles = roleService.getReferenceByTypeIsIn(Set.of(RoleType.ROLE_USER));
+    }
+
+    entity.setRoles(new HashSet<>(roles));
     }
 }

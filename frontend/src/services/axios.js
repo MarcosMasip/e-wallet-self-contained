@@ -36,9 +36,13 @@ instance.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		if (error?.response && [401, 403].includes(error.response.status)) {
+			// Skip auto-logout for failed CORS preflight (OPTIONS) responses
+			const originalRequest = error.config || {};
+			if (originalRequest.method && originalRequest.method.toUpperCase() === 'OPTIONS') {
+				return Promise.reject(error);
+			}
 			try {
 				const currentPath = window.location.pathname;
-				// Avoid infinite redirect loop if already on login or signup
 				if (typeof window !== 'undefined' && !['/login', '/signup'].includes(currentPath)) {
 					localStorage.removeItem(STORAGE_KEY);
 					window.location.replace('/login');

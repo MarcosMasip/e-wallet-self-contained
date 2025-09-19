@@ -29,7 +29,7 @@ public class WalletController {
      * @param id
      * @return WalletResponse wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/{id}")
     public ResponseEntity<WalletResponse> findById(@PathVariable long id) {
         final WalletResponse response = walletService.findById(id);
@@ -42,7 +42,7 @@ public class WalletController {
      * @param iban
      * @return WalletResponse wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/iban/{iban}")
     public ResponseEntity<WalletResponse> findByIban(@PathVariable String iban) {
         final WalletResponse response = walletService.findByIban(iban);
@@ -55,7 +55,7 @@ public class WalletController {
      * @param userId
      * @return WalletResponse wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/users/{userId}")
     public ResponseEntity<List<WalletResponse>> findByUserId(@PathVariable long userId) {
         final List<WalletResponse> response = walletService.findByUserId(userId);
@@ -68,7 +68,7 @@ public class WalletController {
      * @param pageable
      * @return List of WalletResponse wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping
     public ResponseEntity<Page<WalletResponse>> findAll(Pageable pageable) {
         final Page<WalletResponse> response = walletService.findAll(pageable);
@@ -81,7 +81,7 @@ public class WalletController {
      * @param request
      * @return id of the created wallet wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping
     public ResponseEntity<CommandResponse> create(@Valid @RequestBody WalletRequest request) {
         final CommandResponse response = walletService.create(request);
@@ -94,7 +94,7 @@ public class WalletController {
      * @param request
      * @return id of the created transaction wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/transfer")
     public ResponseEntity<CommandResponse> transferFunds(@Valid @RequestBody TransactionRequest request) {
         final CommandResponse response = walletService.transferFunds(request);
@@ -107,7 +107,7 @@ public class WalletController {
      * @param request
      * @return id of the created transaction wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/addFunds")
     public ResponseEntity<CommandResponse> addFunds(@Valid @RequestBody TransactionRequest request) {
         final CommandResponse response = walletService.addFunds(request);
@@ -120,7 +120,7 @@ public class WalletController {
      * @param request
      * @return id of the created transaction wrapped by ResponseEntity<T>
      */
-    @PreAuthorize("hasRole(T(com.github.yildizmy.domain.enums.RoleType).ROLE_USER)")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/withdrawFunds")
     public ResponseEntity<CommandResponse> withdrawFunds(@Valid @RequestBody TransactionRequest request) {
         final CommandResponse response = walletService.withdrawFunds(request);
