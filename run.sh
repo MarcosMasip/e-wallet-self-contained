@@ -14,16 +14,23 @@ err() { echo -e "${RED}[ERR]${NC} $*" 1>&2; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || { err "Missing required command: $1"; exit 1; }; }
 
 log "Checking prerequisites..."
-require_cmd docker
-if ! docker compose version >/dev/null 2>&1; then
-  warn "docker compose plugin not found; trying docker-compose binary"
-  if command -v docker-compose >/dev/null 2>&1; then
+if command -v docker >/dev/null 2>&1; then
+  if docker compose version >/dev/null 2>&1; then
+    COMPOSE_BIN="docker compose"
+  elif command -v docker-compose >/dev/null 2>&1; then
     COMPOSE_BIN="docker-compose"
   else
-    err "docker compose or docker-compose is required."; exit 1
+    warn "Docker present but compose plugin not found."
   fi
 else
-  COMPOSE_BIN="docker compose"
+  warn "Docker not found. Falling back to native dev mode (H2)."
+  exec bash dev-native.sh
+fi
+
+# If we have docker but daemon is down, fallback to native mode instead of aborting
+if ! docker info >/dev/null 2>&1; then
+  warn "Docker daemon unreachable — using native fallback (H2)."
+  exec bash dev-native.sh
 fi
 
 log "Preparing .env file..."

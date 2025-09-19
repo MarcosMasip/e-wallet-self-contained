@@ -41,7 +41,8 @@ The relationship between the entities is shown on [Architecture](backend/src/mai
 ### 🚀 Quick Start (One-Time Setup & Run)
 
 Requirements:
-* Docker (Docker Desktop or engine) with Compose plugin
+* Preferred: Docker (Desktop or engine) with Compose plugin
+* Fallback (auto): Java 17 + Node.js (Yarn) if Docker unavailable (uses in-memory H2 instead of Postgres)
 * macOS / Linux / Windows (PowerShell)
 
 Clone and run (first run downloads dependencies & builds images):
@@ -60,6 +61,12 @@ When the script finishes it prints the URLs and demo users. Open:
 * Frontend: http://localhost:3000
 * Backend Health: http://localhost:8080/actuator/health
 * (If enabled) OpenAPI UI: http://localhost:8080/swagger-ui.html
+
+If Docker is not installed or the daemon is stopped, the script automatically switches to a native fallback mode:
+* Backend runs with Spring profile `h2` (in-memory database)
+* Data is transient (reset each run)
+* Same API base URL and frontend behavior
+* Requires Java 17 (JDK) and Yarn (or npm) installed locally
 
 Subsequent runs are much faster and can be offline (Docker layer & volume cache).
 
@@ -168,6 +175,8 @@ Legacy instructions remain in: [How to run?](backend/src/main/resources/docs/how
 	./run.sh
 	```
 * Change JWT secret: edit `.env` then restart stack.
+* Error: `Cannot connect to the Docker daemon` → Start Docker Desktop (macOS/Windows) or on Linux: `sudo systemctl start docker` then rerun `./run.sh`.
+* Docker absent or stopped → Script transparently starts native mode (H2). Install Docker later for a persistent Postgres database.
 
 ### Roadmap Ideas
 * Add native dev mode script (run backend & frontend outside Docker for hot reload).
