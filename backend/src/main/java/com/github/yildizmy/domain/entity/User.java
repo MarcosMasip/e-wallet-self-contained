@@ -12,8 +12,8 @@ import java.util.Set;
 @Setter
 @Entity
 @EqualsAndHashCode(of = {"username"})
-// Use different physical table name in H2 fallback (handled by conditional naming). Default remains public.user for Postgres.
-@Table(name = "user", schema = "public")
+// Portable table mapping (no explicit schema to work for both Postgres default 'public' and H2)
+@Table(name = "app_user")
 public class User {
 
     @Id

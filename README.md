@@ -95,6 +95,8 @@ jeffreytaylor  password123
 ```
 Adjust `db/h2/data.sql` if you need different credentials; restart native mode to reload.
 
+Note: The underlying table for users has been standardized to `app_user` (renamed from reserved word `user`) across Postgres and H2 for portability and to avoid SQL dialect edge cases.
+
 ### Environment Configuration
 
 Editable variables live in `.env` (created from `.env.example` on first run):

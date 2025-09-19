@@ -9,7 +9,7 @@ import AuthService from '../../services/AuthService';
 export default function LoginForm() {
   const defaultValues = {
     username: 'johndoe',
-    password: 'johnd@e',
+    password: 'password123',
   };
 
   const navigate = useNavigate();

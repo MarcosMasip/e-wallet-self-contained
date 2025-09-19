@@ -4,10 +4,11 @@ INSERT INTO role (id, type) VALUES (2, 'ROLE_ADMIN');
 
 -- Seed users (password = password123 for all)
 -- BCrypt hash generated via: new BCryptPasswordEncoder().encode("password123")
-INSERT INTO "user" (id, first_name, last_name, username, email, password) VALUES
-  (1, 'John', 'Doe', 'johndoe', 'john@doe.com', '$2a$10$S0l0FHNJUQOCEjBs7lnHCOS370dmslSflIHLb6MGltAcdR.vWSfji'),
-  (2, 'Linda', 'Calvin', 'lindacalvin', 'linda@calvin.com', '$2a$10$S0l0FHNJUQOCEjBs7lnHCOS370dmslSflIHLb6MGltAcdR.vWSfji'),
-  (3, 'Jeffrey', 'Taylor', 'jeffreytaylor', 'jeffrey@taylor.com', '$2a$10$S0l0FHNJUQOCEjBs7lnHCOS370dmslSflIHLb6MGltAcdR.vWSfji');
+-- Use same bcrypt hash as Postgres migration V2 for consistency (password123)
+INSERT INTO app_user (id, first_name, last_name, username, email, password) VALUES
+  (1, 'John', 'Doe', 'johndoe', 'john@doe.com', '$2a$10$MMOkMuO8zVcXl8YH2GrZSOYf/9zeC/sznGHRVzAq0T8.tzet7QJWq'),
+  (2, 'Linda', 'Calvin', 'lindacalvin', 'linda@calvin.com', '$2a$10$MMOkMuO8zVcXl8YH2GrZSOYf/9zeC/sznGHRVzAq0T8.tzet7QJWq'),
+  (3, 'Jeffrey', 'Taylor', 'jeffreytaylor', 'jeffrey@taylor.com', '$2a$10$MMOkMuO8zVcXl8YH2GrZSOYf/9zeC/sznGHRVzAq0T8.tzet7QJWq');
 
 -- Seed user-role mapping
 INSERT INTO user_role (user_id, role_id) VALUES (1,1);
@@ -15,6 +16,9 @@ INSERT INTO user_role (user_id, role_id) VALUES (1,2);
 INSERT INTO user_role (user_id, role_id) VALUES (2,1);
 INSERT INTO user_role (user_id, role_id) VALUES (2,2);
 INSERT INTO user_role (user_id, role_id) VALUES (3,1);
+
+-- Advance user sequence for new signups
+ALTER SEQUENCE user_seq RESTART WITH 4;
 
 -- Seed types
 INSERT INTO type (id, name, description) VALUES (1, 'Transfer', 'Transfer type');

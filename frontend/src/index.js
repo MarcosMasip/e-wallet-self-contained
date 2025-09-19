@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/scroll-to-top';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorker from './serviceWorker';
@@ -16,7 +17,9 @@ root.render(
       <ThemeProvider>
         <ScrollToTop />
         <SnackbarProvider preventDuplicate>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </SnackbarProvider>
       </ThemeProvider>
     </BrowserRouter>

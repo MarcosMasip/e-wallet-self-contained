@@ -1,4 +1,7 @@
--- H2 schema for self-contained in-memory mode (mirrors PostgreSQL objects)
+-- Ensure a 'public' schema exists (H2 does not create it automatically like Postgres). This makes
+-- any fully-qualified references (public.*) work seamlessly.
+CREATE SCHEMA IF NOT EXISTS public;
+SET SCHEMA public;
 CREATE SEQUENCE IF NOT EXISTS role_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS transaction_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS type_seq START WITH 1 INCREMENT BY 1;
@@ -10,7 +13,7 @@ CREATE TABLE role (
   type VARCHAR(20) NOT NULL UNIQUE
 );
 
-CREATE TABLE "user" (
+CREATE TABLE app_user (
   id BIGINT PRIMARY KEY,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
@@ -25,7 +28,7 @@ CREATE TABLE wallet (
   name VARCHAR(50) NOT NULL,
   balance DECIMAL NOT NULL,
   user_id BIGINT NOT NULL,
-  CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES "user"(id)
+  CONSTRAINT fk_wallet_user FOREIGN KEY (user_id) REFERENCES app_user(id)
 );
 
 CREATE TABLE type (
@@ -54,5 +57,5 @@ CREATE TABLE user_role (
   user_id BIGINT NOT NULL,
   PRIMARY KEY (role_id, user_id),
   CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES role(id),
-  CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES "user"(id)
+  CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES app_user(id)
 );

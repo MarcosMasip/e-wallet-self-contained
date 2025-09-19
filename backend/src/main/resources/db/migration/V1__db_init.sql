@@ -47,7 +47,7 @@ CREATE TABLE wallet
     CONSTRAINT pk_wallet PRIMARY KEY (id)
 );
 
-CREATE TABLE public."user"
+CREATE TABLE public.app_user
 (
     id         BIGINT       NOT NULL,
     first_name VARCHAR(50)  NOT NULL,
@@ -77,10 +77,10 @@ ALTER TABLE type
 ALTER TABLE wallet
     ADD CONSTRAINT uc_wallet_iban UNIQUE (iban);
 
-ALTER TABLE public."user"
+ALTER TABLE public.app_user
     ADD CONSTRAINT uc_user_email UNIQUE (email);
 
-ALTER TABLE public."user"
+ALTER TABLE public.app_user
     ADD CONSTRAINT uc_user_username UNIQUE (username);
 
 CREATE UNIQUE INDEX wallet_user_id_iban_key ON wallet (user_id, iban);
@@ -97,10 +97,10 @@ ALTER TABLE transaction
     ADD CONSTRAINT FK_TRANSACTION_ON_TYPE FOREIGN KEY (type_id) REFERENCES type (id);
 
 ALTER TABLE wallet
-    ADD CONSTRAINT FK_WALLET_ON_USER FOREIGN KEY (user_id) REFERENCES public."user" (id);
+    ADD CONSTRAINT FK_WALLET_ON_USER FOREIGN KEY (user_id) REFERENCES public.app_user (id);
 
 ALTER TABLE public.user_role
     ADD CONSTRAINT fk_user_role_on_role FOREIGN KEY (role_id) REFERENCES role (id);
 
 ALTER TABLE public.user_role
-    ADD CONSTRAINT fk_user_role_on_user FOREIGN KEY (user_id) REFERENCES public."user" (id);
+    ADD CONSTRAINT fk_user_role_on_user FOREIGN KEY (user_id) REFERENCES public.app_user (id);

@@ -26,19 +26,30 @@ done < .env
 set -u
 
 log "Starting backend (H2 profile)..."
+BACKEND_PORT="${BACKEND_PORT:-8080}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+
+# Free ports if occupied
+for P in "$BACKEND_PORT" "$FRONTEND_PORT"; do
+  if lsof -ti tcp:$P >/dev/null 2>&1; then
+    log "Port $P in use; terminating process(es)..."
+    lsof -ti tcp:$P | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
+done
 pushd backend >/dev/null
 # Ensure mvnw is executable or run via bash
 if [[ ! -x ./mvnw ]]; then
   chmod +x ./mvnw 2>/dev/null || true
 fi
 ./mvnw -q -DskipTests dependency:go-offline || true
-SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=h2" &
+SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=h2 -Dserver.port=$BACKEND_PORT" &
 BACKEND_PID=$!
 popd >/dev/null
 
 # Wait for backend health
 ATTEMPTS=40
-until curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1 || (( ATTEMPTS==0 )); do
+until curl -sf http://localhost:$BACKEND_PORT/api/v1/health >/dev/null 2>&1 || (( ATTEMPTS==0 )); do
   sleep 1; ((ATTEMPTS--));
 done
 if (( ATTEMPTS==0 )); then
@@ -53,15 +64,16 @@ fi
 log "Starting frontend dev server..."
 (
   cd frontend
-  export REACT_APP_API_BASE_URL="http://localhost:8080/api/v1"
-  yarn start
+  export PORT=$FRONTEND_PORT
+  export REACT_APP_API_BASE_URL="http://localhost:$BACKEND_PORT/api/v1"
+  yarn start --silent
 ) &
 FRONTEND_PID=$!
 
 trap 'echo; log "Stopping..."; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true' INT TERM
 
-ok "Backend PID: $BACKEND_PID | Frontend PID: $FRONTEND_PID"
-echo -e "${GREEN}Open http://localhost:3000${NC}"
+ok "Backend PID: $BACKEND_PID (:$BACKEND_PORT) | Frontend PID: $FRONTEND_PID (:$FRONTEND_PORT)"
+echo -e "${GREEN}Open http://localhost:$FRONTEND_PORT${NC}"
 
 if [[ -f scripts/smoke.sh ]]; then
   bash scripts/smoke.sh || true
