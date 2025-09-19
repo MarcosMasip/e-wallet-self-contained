@@ -42,6 +42,7 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/api/v1/auth/**",
+        "/api/v1/health",
             "/v3/api-docs/**",
             "/v3/api-docs.yaml",
             "/swagger-ui/**",
@@ -95,7 +96,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

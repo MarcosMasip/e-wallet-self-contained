@@ -36,6 +36,15 @@ SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments=
 BACKEND_PID=$!
 popd >/dev/null
 
+# Wait for backend health
+ATTEMPTS=40
+until curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1 || (( ATTEMPTS==0 )); do
+  sleep 1; ((ATTEMPTS--));
+done
+if (( ATTEMPTS==0 )); then
+  err "Backend failed to become healthy in time"
+fi
+
 log "Installing frontend deps if needed..."
 if [[ ! -d frontend/node_modules ]]; then
   (cd frontend && yarn install --silent)
@@ -53,6 +62,10 @@ trap 'echo; log "Stopping..."; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || tr
 
 ok "Backend PID: $BACKEND_PID | Frontend PID: $FRONTEND_PID"
 echo -e "${GREEN}Open http://localhost:3000${NC}"
+
+if [[ -f scripts/smoke.sh ]]; then
+  bash scripts/smoke.sh || true
+fi
 
 wait $BACKEND_PID
 wait $FRONTEND_PID

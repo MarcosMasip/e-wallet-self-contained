@@ -177,6 +177,10 @@ Legacy instructions remain in: [How to run?](backend/src/main/resources/docs/how
 * Change JWT secret: edit `.env` then restart stack.
 * Error: `Cannot connect to the Docker daemon` → Start Docker Desktop (macOS/Windows) or on Linux: `sudo systemctl start docker` then rerun `./run.sh`.
 * Docker absent or stopped → Script transparently starts native mode (H2). Install Docker later for a persistent Postgres database.
+* Frontend shows "Network Error":
+	1. Check backend health: `curl -s http://localhost:8080/api/v1/health`
+	2. If fails in native mode, re-run `./run.sh` and watch backend logs.
+	3. Run smoke test: `bash scripts/smoke.sh`
 
 ### Roadmap Ideas
 * Add native dev mode script (run backend & frontend outside Docker for hot reload).
